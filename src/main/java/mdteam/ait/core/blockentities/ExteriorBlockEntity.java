@@ -7,8 +7,11 @@ import mdteam.ait.client.renderers.exteriors.ExteriorEnum;
 import mdteam.ait.client.renderers.exteriors.MaterialStateEnum;
 import mdteam.ait.core.AITBlockEntityTypes;
 import mdteam.ait.core.AITItems;
+import mdteam.ait.core.blocks.ExteriorBlock;
 import mdteam.ait.core.helper.TardisUtil;
 import mdteam.ait.core.item.KeyItem;
+import mdteam.ait.data.AbsoluteBlockPos;
+import mdteam.ait.data.SerialDimension;
 import mdteam.ait.tardis.*;
 import mdteam.ait.tardis.handler.DoorHandler;
 import net.minecraft.block.BlockState;
@@ -247,15 +250,21 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
 
     @Override
     public Tardis getTardis() {
+        if (this.tardisId == null) {
+            this.setTardis(TardisUtil.findTardisByPosition(this.getPos(), new SerialDimension(this.getWorld())));
+        }
+
         return TardisUtil.findTardisByUuid(this.tardisId);
     }
 
     @Override
     public void setTardis(Tardis tardis) {
+        if (tardis == null) return;
+
         this.tardisId = tardis.getUuid();
         this.sync();
 
-        this.getAnimation().setupAnimation(this.getTardis().getTravel().getState());
+        // this.getAnimation().setupAnimation(this.getTardis().getTravel().getState());
     }
 
     public void sync() {
@@ -273,6 +282,7 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
     public void verifyAnimation() {
         if (this.animation != null)
             return;
+        System.out.println(this.getTardis());
         if (this.getTardis() == null)
             return;
 

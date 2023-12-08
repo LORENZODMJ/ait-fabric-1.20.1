@@ -151,7 +151,6 @@ public class ServerTardisManager extends TardisManager {
         for (ServerPlayerEntity player : TardisUtil.getServer().getPlayerManager().getPlayerList()) {
             this.subscribers.put(tardis.getUuid(), player);
         }
-        System.out.println(this.subscribers);
     }
 
     private void sendTardis(ServerPlayerEntity player, UUID uuid) {

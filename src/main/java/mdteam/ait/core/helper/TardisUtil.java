@@ -1,11 +1,13 @@
 package mdteam.ait.core.helper;
 
 import io.wispforest.owo.ops.WorldOps;
+import mdteam.ait.AITMod;
 import mdteam.ait.core.AITDimensions;
 import mdteam.ait.core.blockentities.DoorBlockEntity;
 import mdteam.ait.core.blockentities.ExteriorBlockEntity;
 import mdteam.ait.data.AbsoluteBlockPos;
 import mdteam.ait.data.Corners;
+import mdteam.ait.data.SerialDimension;
 import mdteam.ait.tardis.*;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -186,6 +188,10 @@ public class TardisUtil {
     }
 
     public static Tardis findTardisByPosition(AbsoluteBlockPos.Directed pos) {
+        if (AITMod.isClient()) {
+            ClientTardisManager.getInstance().ask(pos);
+        }
+
         for (Tardis tardis : TardisManager.getInstance().getLookup().values()) {
             if (tardis.getTravel().getPosition() != pos) continue;
 
@@ -195,10 +201,22 @@ public class TardisUtil {
         return null;
     }
 
+    public static Tardis findTardisByPosition(BlockPos pos, SerialDimension dim) {
+        if (AITMod.isClient()) {
+            ClientTardisManager.getInstance().ask(pos);
+        }
+
+        for (Tardis tardis : TardisManager.getInstance().getLookup().values()) {
+            if (tardis.getTravel().getPosition().getDimension().equals(dim) && tardis.getTravel().getPosition().equals(pos)) return tardis;
+        }
+
+        return null;
+    }
+
     public static Tardis findTardisByUuid(UUID uuid) {
         if (uuid == null) return null;
 
-        if (isClient()) {
+        if (AITMod.isClient()) {
             return ClientTardisManager.getInstance().getLookup().get(uuid);
         }
 
