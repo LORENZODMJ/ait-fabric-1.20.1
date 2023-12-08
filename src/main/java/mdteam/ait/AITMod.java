@@ -10,7 +10,9 @@ import mdteam.ait.core.components.block.exterior.ExteriorNBTComponent;
 import mdteam.ait.core.components.block.interior_door.InteriorDoorNBTComponent;
 import mdteam.ait.core.components.block.radio.RadioNBTComponent;
 import mdteam.ait.core.helper.TardisUtil;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,5 +50,12 @@ public class AITMod implements ModInitializer {
 		TardisUtil.init();
 		TardisManager.getInstance();
 		TardisManager.init();
+	}
+
+	public static boolean isClient() {
+		return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
+	}
+	public static boolean isServer() {
+		return !isClient();
 	}
 }

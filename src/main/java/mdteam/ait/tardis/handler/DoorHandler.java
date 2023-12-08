@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
+import static mdteam.ait.AITMod.isClient;
 import static mdteam.ait.tardis.TardisTravel.State.LANDED;
 
 public class DoorHandler {
@@ -67,11 +68,7 @@ public class DoorHandler {
     }
 
     public Tardis tardis() {
-        if (isClient()) {
-            return ClientTardisManager.getInstance().getLookup().get(tardisId);
-        }
-
-        return ServerTardisManager.getInstance().getTardis(tardisId);
+        return TardisUtil.findTardisByUuid(tardisId);
     }
 
     public static boolean useDoor(Tardis tardis, ServerWorld world, @Nullable BlockPos pos, @Nullable ServerPlayerEntity player) {
@@ -134,12 +131,5 @@ public class DoorHandler {
         tardis.getDoor().sync();
 
         return true;
-    }
-
-    public static boolean isClient() {
-        return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-    }
-    public static boolean isServer() {
-        return !isClient();
     }
 }

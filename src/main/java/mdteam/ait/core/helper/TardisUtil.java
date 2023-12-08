@@ -6,6 +6,7 @@ import mdteam.ait.core.blockentities.DoorBlockEntity;
 import mdteam.ait.core.blockentities.ExteriorBlockEntity;
 import mdteam.ait.data.AbsoluteBlockPos;
 import mdteam.ait.data.Corners;
+import mdteam.ait.tardis.*;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -23,19 +24,13 @@ import net.minecraft.util.BlockRotation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
-import mdteam.ait.tardis.Tardis;
-import mdteam.ait.tardis.TardisDesktop;
-import mdteam.ait.tardis.TardisManager;
-import mdteam.ait.tardis.TardisTravel;
 import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static javax.management.timer.Timer.ONE_SECOND;
+import static mdteam.ait.AITMod.isClient;
 
 @SuppressWarnings("unused")
 public class TardisUtil {
@@ -198,6 +193,16 @@ public class TardisUtil {
         }
 
         return null;
+    }
+
+    public static Tardis findTardisByUuid(UUID uuid) {
+        if (uuid == null) return null;
+
+        if (isClient()) {
+            return ClientTardisManager.getInstance().getLookup().get(uuid);
+        }
+
+        return ServerTardisManager.getInstance().getTardis(uuid);
     }
 
     @Nullable

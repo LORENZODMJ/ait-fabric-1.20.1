@@ -76,6 +76,8 @@ public class ServerTardisManager extends TardisManager {
         ServerTardis tardis = new ServerTardis(uuid, pos, schema, exteriorType, consoleType, locked);
         this.lookup.put(uuid, tardis);
 
+        this.subscribeEveryone(tardis);
+
         tardis.getTravel().runAnimations();
         tardis.getTravel().placeExterior();
         return tardis;

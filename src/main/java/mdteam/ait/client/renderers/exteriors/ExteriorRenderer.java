@@ -18,7 +18,6 @@ public class ExteriorRenderer<T extends ExteriorBlockEntity> implements BlockEnt
     @Override
     public void render(T entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         if (entity.getTardis() == null) {
-            entity.syncFromClientManager();
             return;
         }
 

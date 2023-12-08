@@ -27,13 +27,15 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import static mdteam.ait.AITMod.EXTERIORNBT;
+import static mdteam.ait.AITMod.isClient;
 import static mdteam.ait.tardis.TardisTravel.State.LANDED;
 
 public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
 
-    private Tardis tardis;
+    private UUID tardisId;
     public final AnimationState ANIMATION_STATE = new AnimationState();
     private ExteriorAnimation animation;
 
@@ -53,7 +55,7 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
                 return;
             }
             if(Objects.equals(this.getTardis().getUuid().toString(), tag.getUuid("tardis").toString())) {
-                DoorHandler.toggleLock(this.tardis, world, (ServerPlayerEntity) player);
+                DoorHandler.toggleLock(this.getTardis(), world, (ServerPlayerEntity) player);
             } else {
                 world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_BIT.value(), SoundCategory.BLOCKS, 1F, 0.2F);
                 player.sendMessage(Text.literal("TARDIS does not identify with key"), true);
@@ -61,14 +63,8 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
             return;
         }
 
-        // fixme this sucks
-        if (this.tardis == null) {
-            this.getTardis();
-            return;
-        }
-
-        if(this.tardis.getTravel().getState() == LANDED) {
-            if (!this.tardis.getLockedTardis()) {
+        if(this.getTardis().getTravel().getState() == LANDED) {
+            if (!this.getTardis().getLockedTardis()) {
                 if(this.getExteriorType().isDoubleDoor()) {
                     if (this.getRightDoorRotation() == 1.2f && this.getLeftDoorRotation() == 1.2f) {
                         this.setLeftDoorRot(0);
@@ -99,11 +95,11 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
 //                // door.setLeftDoorRot(this.getLeftDoorRotation());
 //                // door.setRightDoorRot(this.getRightDoorRotation());
 //            }
-        this.tardis.getDoor().sync();
+        this.getTardis().getDoor().sync();
     }
 
     public float[] getCorrectDoorRotations() {
-        if(this.tardis != null) {
+        if(this.getTardis() != null) {
             return this.getExteriorType().isDoubleDoor() ? new float[]{this.getLeftDoorRotation(), this.getRightDoorRotation()} : new float[]{this.getLeftDoorRotation()};
         }
         return null;
@@ -111,33 +107,33 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
 
     public void setLeftDoorRot(float rotation) {
         // EXTERIORNBT.get(this).setLeftDoorRotation(rotation);
-        if (this.tardis == null) return;
+        if (this.tardisId == null) return;
 
-        this.tardis.getDoor().setLeftRot(rotation);
+        this.getTardis().getDoor().setLeftRot(rotation);
     }
 
     public void setRightDoorRot(float rotation) {
         // EXTERIORNBT.get(this).setRightDoorRotation(rotation);
 
-        if (this.tardis == null) return;
+        if (this.tardisId == null) return;
 
-        this.tardis.getDoor().setRightRot(rotation);
+        this.getTardis().getDoor().setRightRot(rotation);
     }
 
     public float getLeftDoorRotation() {
         // return EXTERIORNBT.get(this).getLeftDoorRotation();
 
-        if (this.tardis == null) return 5;
+        if (this.tardisId == null) return 5;
 
-        return this.tardis.getDoor().left();
+        return this.getTardis().getDoor().left();
     }
 
     public float getRightDoorRotation() {
         // return EXTERIORNBT.get(this).getRightDoorRotation();
 
-        if (this.tardis == null) return 5;
+        if (this.tardisId == null) return 5;
 
-        return this.tardis.getDoor().right();
+        return this.getTardis().getDoor().right();
     }
 
     @Override
@@ -146,8 +142,8 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
 
         nbt.putFloat("alpha", this.getAlpha());
 
-        if (this.tardis != null) {
-            nbt.putUuid("tardis", this.tardis.getUuid());
+        if (this.tardisId != null) {
+            nbt.putUuid("tardis", this.tardisId);
         }
     }
 
@@ -181,95 +177,91 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
     }
 
     // flip you im readdng it (the client doesnt have the tardis and this fixes it)
-    public void refindTardisClient() {
-        if (this.tardis != null) // No issue
-            return;
-        if (!this.getWorld().isClient())
-            return;
-
-        ClientTardisManager manager = ClientTardisManager.getInstance();
-
-        if (manager.getLookup().isEmpty()) {
-            manager.ask(this.getPos());
-            return;
-        }
-
-        for (Tardis tardis : manager.getLookup().values()) {
-            if (!tardis.getTravel().getPosition().equals(this.pos)) continue;
-
-            this.setTardis(tardis);
-            return;
-        }
-        manager.ask(this.getPos());
-    }
+//    public void refindTardisClient() {
+//        if (this.tardis != null) // No issue
+//            return;
+//        if (!this.getWorld().isClient())
+//            return;
+//
+//        ClientTardisManager manager = ClientTardisManager.getInstance();
+//
+//        if (manager.getLookup().isEmpty()) {
+//            manager.ask(this.getPos());
+//            return;
+//        }
+//
+//        for (Tardis tardis : manager.getLookup().values()) {
+//            if (!tardis.getTravel().getPosition().equals(this.pos)) continue;
+//
+//            this.setTardis(tardis);
+//            return;
+//        }
+//        manager.ask(this.getPos());
+//    }
     // millionth jank sync method
-    public void syncFromClientManager() {
-        if (this.tardis == null)
-            return;
-
-        TardisTravel.State last = this.tardis.getTravel().getState();
-
-        ClientTardisManager.getInstance().getTardis(this.tardis.getUuid(), (var) -> this.tardis = var);
-
-        if (last != this.tardis.getTravel().getState()) {
-            this.animation = null;
-            this.animation = this.getExteriorType().createAnimation(this);
-            AITMod.LOGGER.debug("Created new ANIMATION for " + this);
-            this.animation.setupAnimation(this.getTardis().getTravel().getState());
-            // this.getAnimation();
-        }
-
-        // fixme oh god all this code is so bad just because i realised the client stops syncing propelry on relaoad and im too lazy to do it properly
-
-        if (this.getWorld() != null && this.getWorld().isClient()) {
-            if (this.tardis != null)
-                ClientTardisManager.getInstance().ask(this.tardis.getUuid());
-            else
-                ClientTardisManager.getInstance().ask(this.getPos());
-        }
-    }
+//    public void syncFromClientManager() {
+//        if (this.tardis == null)
+//            return;
+//
+//        TardisTravel.State last = this.tardis.getTravel().getState();
+//
+//        ClientTardisManager.getInstance().getTardis(this.tardis.getUuid(), (var) -> this.tardis = var);
+//
+//        if (last != this.tardis.getTravel().getState()) {
+//            this.animation = null;
+//            this.animation = this.getExteriorType().createAnimation(this);
+//            AITMod.LOGGER.debug("Created new ANIMATION for " + this);
+//            this.animation.setupAnimation(this.getTardis().getTravel().getState());
+//            // this.getAnimation();
+//        }
+//
+//        // fixme oh god all this code is so bad just because i realised the client stops syncing propelry on relaoad and im too lazy to do it properly
+//
+//        if (this.getWorld() != null && this.getWorld().isClient()) {
+//            if (this.tardis != null)
+//                ClientTardisManager.getInstance().ask(this.tardis.getUuid());
+//            else
+//                ClientTardisManager.getInstance().ask(this.getPos());
+//        }
+//    }
     // same here
-    public void refindTardis() {
-        //System.out.println(this.tardis);
-        if (this.tardis != null) // No issue
-            return;
-        if (this.getWorld().isClient())
-            return;
-
-        ServerTardisManager manager = ServerTardisManager.getInstance();
-
-        for (Tardis tardis : manager.getLookup().values()) {
-            if (!tardis.getTravel().getPosition().equals(this.pos)) continue;
-
-            this.setTardis(tardis);
-            return;
-        }
-
-        AITMod.LOGGER.warn("Deleting exterior block at " + this.pos + " due to lack of Tardis!");
-        this.getWorld().removeBlock(this.pos, false);
-    }
+//    public void refindTardis() {
+//        //System.out.println(this.tardis);
+//        if (this.getTardis() != null) // No issue
+//            return;
+//        if (this.getWorld().isClient())
+//            return;
+//
+//        ServerTardisManager manager = ServerTardisManager.getInstance();
+//
+//        for (Tardis tardis : manager.getLookup().values()) {
+//            if (!tardis.getTravel().getPosition().equals(this.pos)) continue;
+//
+//            this.setTardis(tardis);
+//            return;
+//        }
+//
+//        AITMod.LOGGER.warn("Deleting exterior block at " + this.pos + " due to lack of Tardis!");
+//        this.getWorld().removeBlock(this.pos, false);
+//    }
 
     @Override
     public Tardis getTardis() {
-        // fixme unsure if still needed
-        if (this.tardis == null && this.getWorld() != null) {
-            if (!this.getWorld().isClient())
-                refindTardis();
-            else
-                refindTardisClient();
-        }
-
-        if (this.getWorld() != null && this.getWorld().isClient() && this.tardis != null)
-            syncFromClientManager(); // i accidentally made it make a bajillion different instances when it syncs so this fixes that and i dont know how to fix the other thing so theo can do it
-
-        return tardis;
+        return TardisUtil.findTardisByUuid(this.tardisId);
     }
 
     @Override
     public void setTardis(Tardis tardis) {
-        this.tardis = tardis;
+        this.tardisId = tardis.getUuid();
+        this.sync();
 
-        this.getAnimation().setupAnimation(this.tardis.getTravel().getState());
+        this.getAnimation().setupAnimation(this.getTardis().getTravel().getState());
+    }
+
+    public void sync() {
+        if (isClient()) return;
+
+        ServerTardisManager.getInstance().sendToSubscribers(this.getTardis());
     }
 
     public static <T extends BlockEntity> void tick(World world, BlockPos pos, BlockState blockState, T exterior) {
@@ -296,7 +288,7 @@ public class ExteriorBlockEntity extends BlockEntity implements ILinkable {
     }
 
     public ExteriorEnum getExteriorType() {
-        return this.tardis.getExterior().getType();
+        return this.getTardis().getExterior().getType();
     }
 
     public float getAlpha() {
